@@ -1,0 +1,148 @@
+* {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 30px 16px;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #f8fafc;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 38px;
+    color: #60a5fa;
+  }
+
+  h2 {
+    color: #93c5fd;
+  }
+
+  form, #results {
+    max-width: 1000px;
+    margin: 25px auto;
+    padding: 28px;
+    background: #1e293b;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px #0004;
+  }
+
+  form {
+    display: grid;
+    gap: 15px;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: #334155;
+    color: white;
+    font-size: 16px;
+  }
+
+  button {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 9px;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+  }
+
+  #results p {
+    padding: 12px;
+    background: #334155;
+    border-radius: 8px;
+  }
+
+  #error {
+    text-align: center;
+    color: #fca5a5;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+  }
+
+  th, td {
+    padding: 12px;
+    text-align: right;
+    border: 1px solid #475569;
+  }
+
+  th {
+    background: #2563eb;
+  }
+
+  tr:nth-child(even) {
+    background: #334155;
+  }
+
+  #results {
+    overflow-x: auto;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (max-width: 600px) {
+    h1 {
+      font-size: 28px;
+    }
+
+    form, #results {
+      padding: 16px;
+    }
+
+    th, td {
+      padding: 8px;
+      font-size: 12px;
+    }
+  }
+
+  @media print {
+    body {
+      background: white;
+      color: black;
+    }
+
+    form, button, #error {
+      display: none !important;
+    }
+
+    #results {
+      box-shadow: none;
+      background: white;
+      color: black;
+    }
+
+    #results p {
+      background: white;
+    }
+
+    th {
+      background: #ddd;
+      color: black;
+    }
+
+    td, th {
+      border: 1px solid #999;
+    }
+  }

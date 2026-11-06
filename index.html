@@ -52,283 +52,11 @@
     </table>
   </section>
 
-  <script>
-    const $ = id => document.getElementById(id);
-    let simulation = null;
-
-    function calculateLoan(amount, rate, type, months) {
-      const monthlyRate = type === "EA"
-        ? Math.pow(1 + rate / 100, 1 / 12) - 1
-        : rate / 100;
-
-      const payment = monthlyRate === 0
-        ? amount / months
-        : amount * monthlyRate /
-          (1 - Math.pow(1 + monthlyRate, -months));
-
-      let balance = amount;
-      let totalPaid = 0;
-      const rows = [];
-
-      for (let month = 1; month <= months; month++) {
-        const interest = balance * monthlyRate;
-        const principal = month === months
-          ? balance
-          : Math.min(balance, payment - interest);
-
-        const actualPayment = principal + interest;
-        balance = Math.max(0, balance - principal);
-        totalPaid += actualPayment;
-
-        rows.push({
-          month,
-          payment: actualPayment,
-          principal,
-          interest,
-          balance
-        });
-      }
-
-      return {
-        amount, rate, type, months,
-        payment,
-        totalPaid,
-        totalInterest: totalPaid - amount,
-        rows
-      };
-    }
-
-    function formatMoney(value) {
-      return new Intl.NumberFormat("es-CO", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
-    }
-
-    function renderResults() {
-      if (!simulation) return;
-
-      $("payment").textContent = formatMoney(simulation.payment);
-      $("interest").textContent = formatMoney(simulation.totalInterest);
-      $("total").textContent = formatMoney(simulation.totalPaid);
-
-      const tbody = $("schedule");
-      tbody.replaceChildren();
-
-      simulation.rows.forEach(row => {
-        const tr = document.createElement("tr");
-        const values = [
-          row.month,
-          formatMoney(row.payment),
-          formatMoney(row.principal),
-          formatMoney(row.interest),
-          formatMoney(row.balance)
-        ];
-
-        values.forEach(value => {
-          const td = document.createElement("td");
-          td.textContent = value;
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      $("results").hidden = false;
-    }
-
-    $("loanForm").addEventListener("submit", event => {
-      event.preventDefault();
-
-      const amount = Number($("amount").value);
-      const rate = Number($("rate").value);
-      const months = Number($("months").value);
-      const type = $("rateType").value;
-
-      if (
-        !$("amount").value ||
-        !$("rate").value ||
-        !$("months").value ||
-        !Number.isFinite(amount) ||
-        !Number.isFinite(rate) ||
-        amount <= 0 ||
-        rate < 0 ||
-        !Number.isSafeInteger(months) ||
-        months < 1 ||
-        months > 1200
-      ) {
-        $("error").textContent = "Ingresa datos válidos.";
-        $("results").hidden = true;
-        simulation = null;
-        return;
-      }
-
-      simulation = calculateLoan(amount, rate, type, months);
-
-      if (!Number.isFinite(simulation.totalPaid)) {
-        $("error").textContent = "No se pudo calcular el préstamo.";
-        $("results").hidden = true;
-        simulation = null;
-        return;
-      }
-
-      $("error").textContent = "";
-      renderResults();
-    });
-  </script>
+  <script src="actions.js" defer></script>
 </body>
 </html>
 
-<style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    padding: 30px 16px;
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: #f8fafc;
-  }
-
-  h1 {
-    text-align: center;
-    font-size: 38px;
-    color: #60a5fa;
-  }
-
-  h2 {
-    color: #93c5fd;
-  }
-
-  form, #results {
-    max-width: 1000px;
-    margin: 25px auto;
-    padding: 28px;
-    background: #1e293b;
-    border-radius: 16px;
-    box-shadow: 0 8px 30px #0004;
-  }
-
-  form {
-    display: grid;
-    gap: 15px;
-  }
-
-  label {
-    font-weight: bold;
-  }
-
-  input, select {
-    width: 100%;
-    padding: 13px;
-    border: 1px solid #475569;
-    border-radius: 8px;
-    background: #334155;
-    color: white;
-    font-size: 16px;
-  }
-
-  button {
-    padding: 14px 20px;
-    border: none;
-    border-radius: 9px;
-    background: #2563eb;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background: #1d4ed8;
-  }
-
-  #results p {
-    padding: 12px;
-    background: #334155;
-    border-radius: 8px;
-  }
-
-  #error {
-    text-align: center;
-    color: #fca5a5;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    border: none;
-  }
-
-  th, td {
-    padding: 12px;
-    text-align: right;
-    border: 1px solid #475569;
-  }
-
-  th {
-    background: #2563eb;
-  }
-
-  tr:nth-child(even) {
-    background: #334155;
-  }
-
-  #results {
-    overflow-x: auto;
-  }
-
-  [hidden] {
-    display: none !important;
-  }
-
-  @media (max-width: 600px) {
-    h1 {
-      font-size: 28px;
-    }
-
-    form, #results {
-      padding: 16px;
-    }
-
-    th, td {
-      padding: 8px;
-      font-size: 12px;
-    }
-  }
-
-  @media print {
-    body {
-      background: white;
-      color: black;
-    }
-
-    form, button, #error {
-      display: none !important;
-    }
-
-    #results {
-      box-shadow: none;
-      background: white;
-      color: black;
-    }
-
-    #results p {
-      background: white;
-    }
-
-    th {
-      background: #ddd;
-      color: black;
-    }
-
-    td, th {
-      border: 1px solid #999;
-    }
-  }
-</style>
+<link rel="stylesheet" href="style.css">
 <h1>💳 Loan Simulator</h1>
 
 <div class="language-switch">
@@ -562,3 +290,98 @@ document.getElementById("pdfButton").addEventListener("click", () => {
 
   doc.save("Loan-Simulator.pdf");
 });
+
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+path = Path("index.html")
+html = path.read_text(encoding="utf-8")
+
+# Extraer el CSS del archivo HTML
+css_match = re.search(
+    r"<style[^>]*>(.*?)</style>",
+    html,
+    flags=re.DOTALL | re.IGNORECASE
+)
+
+if not css_match:
+    raise SystemExit("No se encontró el bloque <style>.")
+
+css = css_match.group(1).strip()
+Path("style.css").write_text(css + "\n", encoding="utf-8")
+
+html = html.replace(
+    css_match.group(0),
+    '<link rel="stylesheet" href="style.css">',
+    1
+)
+
+# Extraer únicamente el JavaScript interno
+script_match = re.search(
+    r"<script\s*>(.*?)</script>",
+    html,
+    flags=re.DOTALL | re.IGNORECASE
+)
+
+if not script_match:
+    raise SystemExit("No se encontró el JavaScript interno.")
+
+js = script_match.group(1).strip()
+Path("actions.js").write_text(js + "\n", encoding="utf-8")
+
+html = html.replace(
+    script_match.group(0),
+    '<script src="actions.js" defer></script>',
+    1
+)
+
+path.write_text(html, encoding="utf-8")
+
+print("Archivos creados correctamente:")
+print("index.html")
+print("style.css")
+print("actions.js")
+PY
+<link rel="stylesheet" href="style.css">
+<script src="actions.js" defer></script>
+
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+file = Path("index.html")
+html = file.read_text(encoding="utf-8")
+
+# Extraer CSS
+css = re.search(r"<style[^>]*>(.*?)</style>", html, re.S | re.I)
+
+# Extraer JavaScript interno
+js = re.search(r"<script\s*>(.*?)</script>", html, re.S | re.I)
+
+if not css or not js:
+    print("ERROR: No se encontraron los bloques CSS y JavaScript.")
+    print("No se modificó ningún archivo.")
+    raise SystemExit(1)
+
+Path("style.css").write_text(css.group(1).strip(), encoding="utf-8")
+Path("actions.js").write_text(js.group(1).strip(), encoding="utf-8")
+
+html = html.replace(
+    css.group(0),
+    '<link rel="stylesheet" href="style.css">',
+    1
+)
+
+html = html.replace(
+    js.group(0),
+    '<script src="actions.js" defer></script>',
+    1
+)
+
+file.write_text(html, encoding="utf-8")
+
+print("¡Archivos separados correctamente!")
+PY
+<link rel="stylesheet" href="style.css">
+<script src="actions.js" defer></script>
