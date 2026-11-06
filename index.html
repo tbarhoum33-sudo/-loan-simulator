@@ -329,3 +329,109 @@
     }
   }
 </style>
+<h1>💳 Loan Simulator</h1>
+
+<div class="language-switch">
+  <button type="button" id="btnES">🇨🇴 Español</button>
+  <button type="button" id="btnEN">🇺🇸 English</button>
+</div>
+
+.language-switch {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.language-switch button {
+  background: #334155;
+  border: 1px solid #60a5fa;
+}
+
+let currentLanguage = "es";
+
+const languages = {
+  es: {
+    title: "Simulador de préstamos",
+    formTitle: "Simulador de préstamos",
+    amount: "Monto del préstamo",
+    rate: "Tasa de interés (%)",
+    rateType: "Tipo de tasa",
+    annual: "Efectiva Anual (EA)",
+    monthly: "Efectiva Mensual (EM)",
+    months: "Plazo en meses",
+    calculate: "Calcular préstamo",
+    results: "Resultados",
+    payment: "Cuota mensual",
+    interest: "Intereses totales",
+    total: "Total pagado",
+    schedule: "Tabla de amortización",
+    headers: ["Mes", "Cuota", "Capital", "Interés", "Saldo"],
+    invalid: "Ingresa datos válidos."
+  },
+  en: {
+    title: "Loan Simulator",
+    formTitle: "Loan Calculator",
+    amount: "Loan amount",
+    rate: "Interest rate (%)",
+    rateType: "Rate type",
+    annual: "Effective Annual (EA)",
+    monthly: "Effective Monthly (EM)",
+    months: "Term in months",
+    calculate: "Calculate loan",
+    results: "Results",
+    payment: "Monthly payment",
+    interest: "Total interest",
+    total: "Total paid",
+    schedule: "Amortization schedule",
+    headers: ["Month", "Payment", "Principal", "Interest", "Balance"],
+    invalid: "Please enter valid values."
+  }
+};
+
+function changeLanguage(lang) {
+  currentLanguage = lang;
+  document.documentElement.lang = lang;
+
+  const t = languages[lang];
+
+  document.querySelector("h1").textContent = "💳 " + t.title;
+  document.querySelector("body > h2").textContent = t.formTitle;
+
+  const labels = document.querySelectorAll("#loanForm label");
+  labels[0].textContent = t.amount;
+  labels[1].textContent = t.rate;
+  labels[2].textContent = t.rateType;
+  labels[3].textContent = t.months;
+
+  document.querySelector('#rateType option[value="EA"]').textContent = t.annual;
+  document.querySelector('#rateType option[value="EM"]').textContent = t.monthly;
+
+  document.querySelector('#loanForm button').textContent = t.calculate;
+
+  const headings = document.querySelectorAll("#results h2");
+  headings[0].textContent = t.results;
+  headings[1].textContent = t.schedule;
+
+  const resultLabels = document.querySelectorAll("#results > p");
+  resultLabels[0].firstChild.textContent = t.payment + ": ";
+  resultLabels[1].firstChild.textContent = t.interest + ": ";
+  resultLabels[2].firstChild.textContent = t.total + ": ";
+
+  document.querySelectorAll("thead th").forEach((th, i) => {
+    th.textContent = t.headers[i];
+  });
+
+  if (simulation) renderResults();
+}
+
+document.getElementById("btnES").addEventListener("click", () => {
+  changeLanguage("es");
+});
+
+document.getElementById("btnEN").addEventListener("click", () => {
+  changeLanguage("en");
+});
+currentLanguage === "es" ? "es-CO" : "en-US"
+$("error").textContent = languages[currentLanguage].invalid;
