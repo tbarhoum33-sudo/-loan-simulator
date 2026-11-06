@@ -1,12 +1,331 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Simulator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Simulator</title>
 </head>
 <body>
-    <h1>Loan Simulator</h1>
+  <h1>Loan Simulator</h1>
+  <h2>Simulador de préstamos</h2>
+
+  <form id="loanForm">
+    <label>Monto del préstamo</label>
+    <input type="number" id="amount" min="0.01" step="any" required>
+
+    <label>Tasa de interés (%)</label>
+    <input type="number" id="rate" min="0" step="any" required>
+
+    <label>Tipo de tasa</label>
+    <select id="rateType">
+      <option value="EA">Efectiva Anual (EA)</option>
+      <option value="EM">Efectiva Mensual (EM)</option>
+    </select>
+
+    <label>Plazo en meses</label>
+    <input type="number" id="months" min="1" step="1" required>
+
+    <button type="submit">Calcular préstamo</button>
+  </form>
+
+  <p id="error" role="alert"></p>
+
+  <section id="results" hidden>
+    <h2>Resultados</h2>
+    <p>Cuota mensual: <strong id="payment"></strong></p>
+    <p>Intereses totales: <strong id="interest"></strong></p>
+    <p>Total pagado: <strong id="total"></strong></p>
+
+    <h2>Tabla de amortización</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Cuota</th>
+          <th>Capital</th>
+          <th>Interés</th>
+          <th>Saldo</th>
+        </tr>
+      </thead>
+      <tbody id="schedule"></tbody>
+    </table>
+  </section>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let simulation = null;
+
+    function calculateLoan(amount, rate, type, months) {
+      const monthlyRate = type === "EA"
+        ? Math.pow(1 + rate / 100, 1 / 12) - 1
+        : rate / 100;
+
+      const payment = monthlyRate === 0
+        ? amount / months
+        : amount * monthlyRate /
+          (1 - Math.pow(1 + monthlyRate, -months));
+
+      let balance = amount;
+      let totalPaid = 0;
+      const rows = [];
+
+      for (let month = 1; month <= months; month++) {
+        const interest = balance * monthlyRate;
+        const principal = month === months
+          ? balance
+          : Math.min(balance, payment - interest);
+
+        const actualPayment = principal + interest;
+        balance = Math.max(0, balance - principal);
+        totalPaid += actualPayment;
+
+        rows.push({
+          month,
+          payment: actualPayment,
+          principal,
+          interest,
+          balance
+        });
+      }
+
+      return {
+        amount, rate, type, months,
+        payment,
+        totalPaid,
+        totalInterest: totalPaid - amount,
+        rows
+      };
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("es-CO", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function renderResults() {
+      if (!simulation) return;
+
+      $("payment").textContent = formatMoney(simulation.payment);
+      $("interest").textContent = formatMoney(simulation.totalInterest);
+      $("total").textContent = formatMoney(simulation.totalPaid);
+
+      const tbody = $("schedule");
+      tbody.replaceChildren();
+
+      simulation.rows.forEach(row => {
+        const tr = document.createElement("tr");
+        const values = [
+          row.month,
+          formatMoney(row.payment),
+          formatMoney(row.principal),
+          formatMoney(row.interest),
+          formatMoney(row.balance)
+        ];
+
+        values.forEach(value => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      $("results").hidden = false;
+    }
+
+    $("loanForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const amount = Number($("amount").value);
+      const rate = Number($("rate").value);
+      const months = Number($("months").value);
+      const type = $("rateType").value;
+
+      if (
+        !$("amount").value ||
+        !$("rate").value ||
+        !$("months").value ||
+        !Number.isFinite(amount) ||
+        !Number.isFinite(rate) ||
+        amount <= 0 ||
+        rate < 0 ||
+        !Number.isSafeInteger(months) ||
+        months < 1 ||
+        months > 1200
+      ) {
+        $("error").textContent = "Ingresa datos válidos.";
+        $("results").hidden = true;
+        simulation = null;
+        return;
+      }
+
+      simulation = calculateLoan(amount, rate, type, months);
+
+      if (!Number.isFinite(simulation.totalPaid)) {
+        $("error").textContent = "No se pudo calcular el préstamo.";
+        $("results").hidden = true;
+        simulation = null;
+        return;
+      }
+
+      $("error").textContent = "";
+      renderResults();
+    });
+  </script>
 </body>
 </html>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 30px 16px;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #f8fafc;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 38px;
+    color: #60a5fa;
+  }
+
+  h2 {
+    color: #93c5fd;
+  }
+
+  form, #results {
+    max-width: 1000px;
+    margin: 25px auto;
+    padding: 28px;
+    background: #1e293b;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px #0004;
+  }
+
+  form {
+    display: grid;
+    gap: 15px;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: #334155;
+    color: white;
+    font-size: 16px;
+  }
+
+  button {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 9px;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+  }
+
+  #results p {
+    padding: 12px;
+    background: #334155;
+    border-radius: 8px;
+  }
+
+  #error {
+    text-align: center;
+    color: #fca5a5;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+  }
+
+  th, td {
+    padding: 12px;
+    text-align: right;
+    border: 1px solid #475569;
+  }
+
+  th {
+    background: #2563eb;
+  }
+
+  tr:nth-child(even) {
+    background: #334155;
+  }
+
+  #results {
+    overflow-x: auto;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (max-width: 600px) {
+    h1 {
+      font-size: 28px;
+    }
+
+    form, #results {
+      padding: 16px;
+    }
+
+    th, td {
+      padding: 8px;
+      font-size: 12px;
+    }
+  }
+
+  @media print {
+    body {
+      background: white;
+      color: black;
+    }
+
+    form, button, #error {
+      display: none !important;
+    }
+
+    #results {
+      box-shadow: none;
+      background: white;
+      color: black;
+    }
+
+    #results p {
+      background: white;
+    }
+
+    th {
+      background: #ddd;
+      color: black;
+    }
+
+    td, th {
+      border: 1px solid #999;
+    }
+  }
+</style>
