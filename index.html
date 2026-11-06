@@ -435,3 +435,130 @@ document.getElementById("btnEN").addEventListener("click", () => {
 });
 currentLanguage === "es" ? "es-CO" : "en-US"
 $("error").textContent = languages[currentLanguage].invalid;
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<div class="export-actions">
+  <button type="button" id="printButton">
+    🖨️ Imprimir
+  </button>
+
+  <button type="button" id="pdfButton">
+    📄 Descargar PDF
+  </button>
+</div>
+
+.export-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.export-actions button {
+  flex: 1;
+}
+
+@media print {
+  .language-switch,
+  .export-actions {
+    display: none !important;
+  }
+}
+
+document.getElementById("printButton").addEventListener("click", () => {
+  if (!simulation) return;
+  window.print();
+});
+
+document.getElementById("pdfButton").addEventListener("click", () => {
+  if (!simulation) {
+    alert("Primero calcula un préstamo.");
+    return;
+  }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert("No se pudo cargar la biblioteca PDF.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const spanish = currentLanguage === "es";
+
+  doc.setFontSize(20);
+  doc.text("Loan Simulator", 14, 20);
+
+  doc.setFontSize(12);
+  doc.text(
+    spanish ? "Simulacion de prestamo" : "Loan simulation",
+    14, 30
+  );
+
+  const data = simulation;
+
+  const summary = [
+    [
+      spanish ? "Monto" : "Amount",
+      formatMoney(data.amount)
+    ],
+    [
+      spanish ? "Tasa" : "Rate",
+      data.rate + "% " + data.type
+    ],
+    [
+      spanish ? "Plazo" : "Term",
+      data.months + (spanish ? " meses" : " months")
+    ],
+    [
+      spanish ? "Cuota mensual" : "Monthly payment",
+      formatMoney(data.payment)
+    ],
+    [
+      spanish ? "Intereses totales" : "Total interest",
+      formatMoney(data.totalInterest)
+    ],
+    [
+      spanish ? "Total pagado" : "Total paid",
+      formatMoney(data.totalPaid)
+    ]
+  ];
+
+  doc.autoTable({
+    startY: 38,
+    head: [[
+      spanish ? "Concepto" : "Concept",
+      spanish ? "Valor" : "Value"
+    ]],
+    body: summary,
+    theme: "grid",
+    headStyles: {
+      fillColor: [37, 99, 235]
+    }
+  });
+
+  const rows = data.rows.map(row => [
+    row.month,
+    formatMoney(row.payment),
+    formatMoney(row.principal),
+    formatMoney(row.interest),
+    formatMoney(row.balance)
+  ]);
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 12,
+    head: [languages[currentLanguage].headers],
+    body: rows,
+    theme: "striped",
+    styles: {
+      fontSize: 8
+    },
+    headStyles: {
+      fillColor: [37, 99, 235]
+    }
+  });
+
+  doc.save("Loan-Simulator.pdf");
+});
